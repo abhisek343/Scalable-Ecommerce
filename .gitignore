@@ -1,3 +1,10 @@
-node_modules
+node_modules/
 .env
+.env.local
 dist/
+*.log
+.DS_Store
+coverage/
+.idea/
+*.pyc
+__pycache__/

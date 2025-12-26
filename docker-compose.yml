@@ -3,81 +3,94 @@ version: "3.8"
 services:
   user-service:
     build: ./user-service
-    ports: # This service will be accessible on host port 5000
+    ports:
+
       - 5000:5000
     environment:
       - MONGO_URI=${MONGO_URI_USERS}
+      - JWT_SECRET=${JWT_SECRET}
+      - REDIS_URL=redis://redis:6379
+    networks:
+      - ecommerce-network
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+    #   replicas: 2
+
+  product-service:
+    build: ./product-service
+    ports:
+
+      - 5001:5001
+    environment:
+      - MONGO_URI=${MONGO_URI_PRODUCTS}
       - JWT_SECRET=${JWT_SECRET}
     networks:
       - ecommerce-network
     depends_on:
       - mongo
-    restart: unless-stopped # Added restart policy
-    # deploy: # Temporarily removed to avoid port conflicts with multiple replicas
-    #   replicas: 2
-
-  product-service:
-    build: ./product-service
-    ports: # This service will be accessible on host port 5001
-      - 5001:5001
-    environment:
-      - MONGO_URI=${MONGO_URI_PRODUCTS}
-    networks:
-      - ecommerce-network
-    depends_on:
-      - mongo
-    # deploy: # Temporarily removed
     #   replicas: 2
 
   shopping-cart-service:
     build: ./shopping-cart-service
-    ports: # This service will be accessible on host port 5002
+    ports:
+
       - 5002:5002
     environment:
       - MONGO_URI=${MONGO_URI_CART}
-      # Ensure PRODUCT_SERVICE_URI is set in your .env for shopping-cart-service
-      # e.g., PRODUCT_SERVICE_URI=http://product-service:5001
+
+      - PRODUCT_SERVICE_URI=${PRODUCT_SERVICE_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=5002
     networks:
       - ecommerce-network
     depends_on:
       - mongo
-      - product-service # Added explicit dependency
-    # deploy: # Temporarily removed
+      - product-service
     #   replicas: 2
 
   order-service:
-    build: ./order-service
-    ports: # This service will be accessible on host port 5003
+    build:
+      context: .
+      dockerfile: order-service/Dockerfile
+    ports:
+
       - 5003:5003
     environment:
       - MONGO_URI=${MONGO_URI_ORDER}
-      # Ensure PRODUCT_SERVICE_URI is set in your .env for order-service
-      # e.g., PRODUCT_SERVICE_URI=http://product-service:5001
+
+      - PRODUCT_SERVICE_URI=${PRODUCT_SERVICE_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - PORT=5003
+      - RABBITMQ_URL=amqp://ecommerce:ecommerce123@rabbitmq:5672
     networks:
       - ecommerce-network
     depends_on:
       - mongo
-      - product-service # Added explicit dependency
-    # deploy: # Temporarily removed
+      - product-service
+      - rabbitmq
     #   replicas: 2
-
   payment-service:
     build: ./payment-service
-    ports: # This service will be accessible on host port 5719
-      - 5719:5004 # Host port 5719 maps to container port 5004
+    ports:
+
+      - 5719:5004
     environment:
       - MONGO_URI=${MONGO_URI_PAYMENT}
-      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
     networks:
       - ecommerce-network
     depends_on:
       - mongo
-    # deploy: # Temporarily removed
     #   replicas: 2
 
   notification-service:
     build: ./notification-service
-    ports: # This service will be accessible on host port 5005
+    ports:
+
       - 5005:5005
     environment:
       - NODEMAILER_EMAIL=${NODEMAILER_EMAIL}
@@ -87,9 +100,6 @@ services:
       - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
     networks:
       - ecommerce-network
-    # No depends_on mongo needed if it doesn't directly use it, but often they do for storing notification history.
-    # If it does, add:
-    # depends_on:
     #   - mongo
 
   mongo:
@@ -100,16 +110,152 @@ services:
       - mongo-data:/data/db
     networks:
       - ecommerce-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ for message queue
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=ecommerce
+      - RABBITMQ_DEFAULT_PASS=ecommerce123
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9095:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  # Grafana for visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/dashboards
+    networks:
+      - ecommerce-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+  # Elasticsearch for logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -s http://localhost:9200/_cluster/health | grep -vq '\"status\":\"red\"'" ]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+
+  # Kibana for log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - ecommerce-network
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # Logstash for log processing
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    ports:
+      - "5044:5044"
+    volumes:
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+    networks:
+      - ecommerce-network
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # Consul for service discovery
+  consul:
+    image: consul:1.15
+    ports:
+      - "8500:8500"
+      - "8600:8600/udp"
+    command: agent -server -bootstrap-expect=1 -ui -client=0.0.0.0
+    environment:
+      - CONSUL_BIND_INTERFACE=eth0
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
 
   nginx:
     image: nginx:latest
-    ports: # Nginx will be accessible on host port 80
+    ports:
+      # Nginx will be accessible on host port 80
       - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro # Added :ro for read-only mount
     networks:
       - ecommerce-network
-    depends_on: # Nginx should wait for all backend services to be available
+    depends_on:
+      # Nginx should wait for all backend services to be available
       - user-service
       - product-service
       - shopping-cart-service
@@ -120,40 +266,12 @@ services:
 
 volumes:
   mongo-data:
-
+  redis-data:
+  rabbitmq-data:
+  prometheus-data:
+  grafana-data:
+  elasticsearch-data:
+  consul-data:
 networks:
   ecommerce-network:
     driver: bridge
-
-
-# **Key changes made in the YAML above:**
-
-# 1.  **Commented out `deploy: replicas: 2`** for `user-service`, `product-service`, `shopping-cart-service`, `order-service`, and `payment-service`. This will ensure only one instance of each starts, avoiding the host port conflicts.
-# 2.  **Added explicit `depends_on` for `product-service`** in `shopping-cart-service` and `order-service` because they rely on `PRODUCT_SERVICE_URI`. While Nginx also has `depends_on`, it's good for services to declare direct dependencies if they make direct calls during startup or initialization.
-# 3.  Added `notification-service` to `nginx`'s `depends_on` list for completeness.
-# 4.  Added `:ro` (read-only) to the `nginx.conf` volume mount, which is good practice for configuration files.
-# 5.  Added `restart: always` to `nginx`.
-
-
-
-
-# 1.  **Ensure all previous containers are stopped and removed:**
-#     ```bash
-#     docker compose down
-#     ```
-#     (This is very important to release any bound ports and remove old containers).
-# 2.  **Try starting everything again:**
-#     ```bash
-#     docker compose up -d --build
-#     ```
-# 3.  **Check the status:**
-#     ```bash
-#     docker compose ps
-#     ```
-#     All services should now be up and running (1 instance each).
-# 4..  **Check logs** if any service fails to start:
-#     ```bash
-#     docker compose logs <service_name>
-#     ```
-
-# This should resolve the port binding errors. If you later want to test with 2 replicas for a service (e.g., `user-service`), you would uncomment its `deploy: replicas: 2` section, but you should *also remove its `ports:` section* (e.g., remove `ports: - 5000:5000` from `user-service`). Nginx would then be responsible for load balancing requests to the two `user-service` instances via `http://user-service:5000` within the Docker netwo

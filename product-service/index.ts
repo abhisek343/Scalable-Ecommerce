@@ -6,7 +6,7 @@ import productRoutes from "./routes/product";
 const PORT: string | number = process.env.PORT || 5001;
 
 const app: Application = express();
-dotenv.config(); // Ensure dotenv is configured before accessing process.env variables it might set
+dotenv.config();
 
 app.use(express.json());
 

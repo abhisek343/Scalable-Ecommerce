@@ -22,7 +22,6 @@ interface JwtPayload {
 }
 
 // Register a new user
-// TODO: Add email validation and more robust error handling
 // UNIQUE_CHANGE_FOR_COMMIT_35
 router.post("/register", async (req: Request<{}, {}, UserAuthRequestBody>, res: Response) => {
   try {
@@ -40,7 +39,7 @@ router.post("/register", async (req: Request<{}, {}, UserAuthRequestBody>, res: 
     user = new User({ name, email, password });
     await user.save();
 
-    // Ensure user._id is available and correctly typed for JWT payload
+
     const userIdForToken: string = (user as any)._id.toString(); // Casting to any if _id type is problematic
 
     const token = jwt.sign({ userId: userIdForToken }, JWT_SECRET, {

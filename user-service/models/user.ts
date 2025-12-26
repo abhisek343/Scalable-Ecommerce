@@ -13,7 +13,6 @@ const userSchema: Schema<IUser> = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  // TODO: Extend user profile with fields like address, phone number, preferences
   // UNIQUE_CHANGE_FOR_COMMIT_43
 });
 

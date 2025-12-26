@@ -1,14 +1,24 @@
 # ---- Builder Stage ----
 FROM node:18-alpine AS builder
 
+# Copy shared library
+COPY shared /shared
+
 WORKDIR /app
 
-# Copy package files and install all dependencies (including devDependencies for building)
-COPY package*.json ./
+# Copy package files
+COPY order-service/package*.json ./
 RUN npm install
 
-# Copy the rest of the application code
-COPY . .
+# Copy application code
+COPY order-service .
+
+# Install shared library explicitly
+WORKDIR /shared
+RUN npm install && npm run build
+
+WORKDIR /app
+RUN npm install /shared
 
 # Build TypeScript code
 # Ensure tsconfig.json is present and correctly configured for 'outDir': './dist'
@@ -17,13 +27,19 @@ RUN npm run build
 # ---- Production Stage ----
 FROM node:18-alpine
 
+# Copy shared library and build it
+COPY shared /shared
+WORKDIR /shared
+RUN npm install && npm run build
+
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY order-service/package*.json ./
 
 # Install only production dependencies
-RUN npm ci --omit=dev
+# Also install shared library
+RUN npm install --omit=dev && npm install /shared --omit=dev
 
 # Copy compiled code from builder stage
 COPY --from=builder /app/dist ./dist

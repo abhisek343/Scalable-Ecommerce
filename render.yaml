@@ -1,0 +1,117 @@
+# Render Blueprint - E-Commerce Microservices
+# Deploy all services with one click
+
+services:
+  # User Service
+  - type: web
+    name: user-service
+    runtime: docker
+    dockerfilePath: ./user-service/Dockerfile
+    dockerContext: ./user-service
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
+    healthCheckPath: /health
+
+  # Product Service
+  - type: web
+    name: product-service
+    runtime: docker
+    dockerfilePath: ./product-service/Dockerfile
+    dockerContext: ./product-service
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5001
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+    healthCheckPath: /health
+
+  # Shopping Cart Service
+  - type: web
+    name: cart-service
+    runtime: docker
+    dockerfilePath: ./shopping-cart-service/Dockerfile
+    dockerContext: ./shopping-cart-service
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5002
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PRODUCT_SERVICE_URI
+        sync: false
+    healthCheckPath: /health
+
+  # Order Service  
+  - type: web
+    name: order-service
+    runtime: docker
+    dockerfilePath: ./order-service/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5003
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: PRODUCT_SERVICE_URI
+        sync: false
+      - key: RABBITMQ_URL
+        sync: false
+    healthCheckPath: /health
+
+  # Payment Service
+  - type: web
+    name: payment-service
+    runtime: docker
+    dockerfilePath: ./payment-service/Dockerfile
+    dockerContext: ./payment-service
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5004
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+    healthCheckPath: /health
+
+  # Notification Service
+  - type: web
+    name: notification-service
+    runtime: docker
+    dockerfilePath: ./notification-service/Dockerfile
+    dockerContext: ./notification-service
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5005
+      - key: NODEMAILER_EMAIL
+        sync: false
+      - key: NODEMAILER_PASSWORD
+        sync: false
+    healthCheckPath: /health
