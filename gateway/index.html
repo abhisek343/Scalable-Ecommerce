@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scalable E-Commerce API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .service-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .service-card {
+            background: #fff;
+            border: 1px solid #e1e4e8;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .service-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: #0366d6;
+        }
+        .service-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .service-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #0366d6;
+        }
+        .service-desc {
+            font-size: 0.9rem;
+            color: #586069;
+            margin-top: 0.5rem;
+        }
+        .footer {
+            margin-top: 2rem;
+            text-align: center;
+            color: #586069;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 E-Commerce Microservices</h1>
+        <div class="service-list">
+            <a href="/api/users/docs/" class="service-card">
+                <span class="service-icon">👤</span>
+                <span class="service-name">User Service</span>
+                <div class="service-desc">Auth, Profiles & Security</div>
+            </a>
+            <a href="/api/products/docs/" class="service-card">
+                <span class="service-icon">🛍️</span>
+                <span class="service-name">Product Service</span>
+                <div class="service-desc">Catalog & Inventory</div>
+            </a>
+            <a href="/api/cart/docs/" class="service-card">
+                <span class="service-icon">🛒</span>
+                <span class="service-name">Shopping Cart</span>
+                <div class="service-desc">Basket Management</div>
+            </a>
+            <a href="/api/orders/docs/" class="service-card">
+                <span class="service-icon">📦</span>
+                <span class="service-name">Order Service</span>
+                <div class="service-desc">Order Processing & History</div>
+            </a>
+            <a href="/api/payments/docs/" class="service-card">
+                <span class="service-icon">💳</span>
+                <span class="service-name">Payment Service</span>
+                <div class="service-desc">Razorpay Integration</div>
+            </a>
+            <a href="/api/notifications/docs/" class="service-card">
+                <span class="service-icon">🔔</span>
+                <span class="service-name">Notification Service</span>
+                <div class="service-desc">Email & SMS Alerts</div>
+            </a>
+        </div>
+        <div class="footer">
+            <p>Deployed on Railway • Powered by Nginx Gateway</p>
+        </div>
+    </div>
+</body>
+</html>

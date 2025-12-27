@@ -37,6 +37,12 @@ http {
     server {
         listen 80;
 
+        # Unified Homepage
+        location = / {
+            root /etc/nginx/html;
+            index index.html;
+        }
+
         # Swagger Documentation Routes
         location /api/users/docs/ {
             proxy_pass http://user_service/api-docs/;

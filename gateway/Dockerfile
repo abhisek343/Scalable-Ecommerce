@@ -10,6 +10,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copy the template and entrypoint script
 COPY nginx.conf.template /etc/nginx/nginx.conf.template
 COPY docker-entrypoint.sh /docker-entrypoint.sh
+COPY index.html /etc/nginx/html/index.html
 
 # Make entrypoint executable
 RUN chmod +x /docker-entrypoint.sh
