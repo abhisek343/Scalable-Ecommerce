@@ -1,0 +1,138 @@
+events {}
+
+http {
+    # Basic Security
+    server_tokens off;
+
+    # Performance
+    gzip on;
+    gzip_types text/plain application/json;
+    gzip_min_length 1000;
+
+    # Upstream definitions for each microservice
+    upstream user_service {
+        server ${USER_SERVICE_HOST};
+    }
+
+    upstream product_service {
+        server ${PRODUCT_SERVICE_HOST};
+    }
+
+    upstream shopping_cart_service {
+        server ${SHOPPING_CART_SERVICE_HOST};
+    }
+
+    upstream order_service {
+        server ${ORDER_SERVICE_HOST};
+    }
+
+    upstream payment_service {
+        server ${PAYMENT_SERVICE_HOST};
+    }
+
+    upstream notification_service {
+        server ${NOTIFICATION_SERVICE_HOST};
+    }
+
+    server {
+        listen 80;
+
+        # Swagger Documentation Routes
+        location /api/users/docs/ {
+            proxy_pass http://user_service/api-docs/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/products/docs/ {
+            proxy_pass http://product_service/api-docs/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/cart/docs/ {
+            proxy_pass http://shopping_cart_service/api-docs/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/orders/docs/ {
+            proxy_pass http://order_service/api-docs/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/payments/docs/ {
+            proxy_pass http://payment_service/api-docs/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/notifications/docs/ {
+            proxy_pass http://notification_service/api-docs/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # API Routes
+        location /api/users/ {
+            proxy_pass http://user_service/api/users/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/products/ {
+            proxy_pass http://product_service/api/products/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/cart/ {
+            proxy_pass http://shopping_cart_service/api/cart/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/orders/ {
+            proxy_pass http://order_service/api/orders/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/payments/ {
+            proxy_pass http://payment_service/api/payments/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        location /api/notifications/ {
+            proxy_pass http://notification_service/api/notifications/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
