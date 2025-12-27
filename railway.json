@@ -1,0 +1,5 @@
+{
+    "build": {
+        "dockerfilePath": "order-service/Dockerfile"
+    }
+}
