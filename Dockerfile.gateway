@@ -1,0 +1,21 @@
+FROM nginx:alpine
+
+# Install envsubst for environment variable substitution
+RUN apk add --no-cache gettext
+
+# Remove default nginx config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Copy the template and entrypoint script from gateway directory
+COPY gateway/nginx.conf.template /etc/nginx/nginx.conf.template
+COPY gateway/docker-entrypoint.sh /docker-entrypoint.sh
+COPY gateway/index.html /etc/nginx/html/index.html
+
+# Make entrypoint executable
+RUN chmod +x /docker-entrypoint.sh
+
+# Set entrypoint
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
+# Start Nginx
+CMD ["nginx", "-g", "daemon off;"]
